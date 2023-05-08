@@ -24,6 +24,8 @@ from ros_compatibility.core import get_ros_version
 
 from carla_ros_bridge.sensor import Sensor, create_cloud
 
+from geometry_msgs.msg import Vector3
+
 from sensor_msgs.msg import CameraInfo, Image, PointCloud2, PointField
 
 ROS_VERSION = get_ros_version()
@@ -71,9 +73,12 @@ class Camera(Sensor):
                                                                        self.carla_actor.attributes))
         else:
             self._build_camera_info()
+            self.build_camera_location()
 
         self.camera_info_publisher = node.new_publisher(CameraInfo, self.get_topic_prefix() +
                                                         '/camera_info', qos_profile=10)
+        self.camera_transform_publisher = node.new_publisher(Vector3, self.get_topic_prefix() +
+                                                        '/camera_positon', qos_profile=10)
         self.camera_image_publisher = node.new_publisher(Image, self.get_topic_prefix() +
                                                          '/' + 'image', qos_profile=10)
 
@@ -112,6 +117,17 @@ class Camera(Sensor):
             camera_info.p = [fx, 0.0, cx, 0.0, 0.0, fy, cy, 0.0, 0.0, 0.0, 1.0, 0.0]
         self._camera_info = camera_info
 
+    def build_camera_location(self):
+        camera_transform = Vector3()
+
+        actor_location = self.carla_actor.get_location()
+
+        camera_transform.x = actor_location.x
+        camera_transform.y = actor_location.y
+        camera_transform.z = actor_location.z
+        return camera_transform
+
+
     # pylint: disable=arguments-differ
     def sensor_data_updated(self, carla_camera_data):
         """
@@ -124,6 +140,7 @@ class Camera(Sensor):
         cam_info.header = img_msg.header
         self.camera_info_publisher.publish(cam_info)
         self.camera_image_publisher.publish(img_msg)
+        self.camera_transform_publisher.publish(self.build_camera_location())
 
     def get_ros_transform(self, pose, timestamp):
         """

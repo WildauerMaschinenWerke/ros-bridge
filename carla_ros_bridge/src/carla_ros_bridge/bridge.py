@@ -11,6 +11,7 @@ Rosbridge class:
 Class that handle communication between CARLA and ROS
 """
 
+import re
 import os
 import pkg_resources
 try:
@@ -36,6 +37,7 @@ from carla_ros_bridge.world_info import WorldInfo
 from carla_msgs.msg import CarlaControl, CarlaWeatherParameters
 from carla_msgs.srv import SpawnObject, DestroyObject, GetBlueprints
 from rosgraph_msgs.msg import Clock
+from std_msgs.msg import String
 
 
 class CarlaRosBridge(CompatibleNode):
@@ -119,6 +121,8 @@ class CarlaRosBridge(CompatibleNode):
             self.carla_settings.synchronous_mode,
             self.carla_settings.fixed_delta_seconds,
             self)
+        
+        self.weather_publisher = self.new_publisher(String, "/carla/active_weather_type", 10)
 
         # for waiting for ego vehicle control commands in synchronous mode,
         # their ids are maintained in a list.
@@ -126,6 +130,8 @@ class CarlaRosBridge(CompatibleNode):
         self._all_vehicle_control_commands_received = Event()
         self._expected_ego_vehicle_control_command_ids = []
         self._expected_ego_vehicle_control_command_ids_lock = Lock()
+
+        carla_world.set_weather(getattr(carla.WeatherParameters, 'ClearNoon'))
 
         if self.sync_mode:
             self.carla_run_state = CarlaControl.PLAY
@@ -159,6 +165,14 @@ class CarlaRosBridge(CompatibleNode):
         self.carla_weather_subscriber = \
             self.new_subscription(CarlaWeatherParameters, "/carla/weather_control",
                                   self.on_weather_changed, qos_profile=10, callback_group=self.callback_group)
+        
+    def get_current_weather_name(self):
+        presets = [x for x in dir(carla.WeatherParameters) if re.match('[A-Z].+', x)]
+        current_weather = self.carla_world.get_weather()
+        for preset in presets:
+	        if getattr(carla.WeatherParameters, preset) == current_weather:
+                    return preset
+        return "unknown weather"
 
     def spawn_object(self, req, response=None):
         response = roscomp.get_service_response(SpawnObject)
@@ -265,9 +279,12 @@ class CarlaRosBridge(CompatibleNode):
             self.actor_factory.update_available_objects()
             frame = self.carla_world.tick()
 
+	  
             world_snapshot = self.carla_world.get_snapshot()
 
             self.status_publisher.set_frame(frame)
+            self.weather_publisher.publish(self.get_current_weather_name())
+  
             self.update_clock(world_snapshot.timestamp)
             self.logdebug("Tick for frame {} returned. Waiting for sensor data...".format(
                 frame))
@@ -301,6 +318,7 @@ class CarlaRosBridge(CompatibleNode):
             if self.timestamp_last_run < carla_snapshot.timestamp.elapsed_seconds:
                 self.timestamp_last_run = carla_snapshot.timestamp.elapsed_seconds
                 self.update_clock(carla_snapshot.timestamp)
+                self.weather_publisher.publish(self.get_current_weather_name())
                 self.status_publisher.set_frame(carla_snapshot.frame)
                 self._update(carla_snapshot.frame,
                              carla_snapshot.timestamp.elapsed_seconds)
