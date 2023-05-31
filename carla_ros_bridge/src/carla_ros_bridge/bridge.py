@@ -444,7 +444,8 @@ def main(args=None):
                         carla_client.get_server_version()))
 
         carla_world = carla_client.get_world()
-
+       
+        """
         if "town" in parameters and not parameters['passive']:
             if parameters["town"].endswith(".xodr"):
                 carla_bridge.loginfo(
@@ -458,6 +459,7 @@ def main(args=None):
                         parameters["town"], carla_world.get_map().name))
                     carla_world = carla_client.load_world(parameters["town"])
             carla_world.tick()
+        """
 
         carla_bridge.initialize_bridge(carla_client.get_world(), parameters)
 
