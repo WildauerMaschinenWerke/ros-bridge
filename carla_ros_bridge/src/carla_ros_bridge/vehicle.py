@@ -57,6 +57,8 @@ class Vehicle(TrafficParticipant):
                                       parent=parent,
                                       node=node,
                                       carla_actor=carla_actor)
+        
+        print("im a vhivles")
 
     def get_marker_color(self):  # pylint: disable=no-self-use
         """

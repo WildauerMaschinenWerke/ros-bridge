@@ -357,8 +357,7 @@ class ActorFactory(object):
             else:
                 actor = Traffic(uid, name, parent, self.node, carla_actor)
         elif carla_actor.type_id.startswith("vehicle"):
-            if carla_actor.attributes.get('role_name')\
-                    in self.node.parameters['ego_vehicle']['role_name']:
+            if "ego" in carla_actor.attributes.get('role_name') :
                 actor = EgoVehicle(
                     uid, name, parent, self.node, carla_actor,
                     self.node._ego_vehicle_control_applied_callback)

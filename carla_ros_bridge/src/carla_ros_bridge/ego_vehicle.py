@@ -11,6 +11,7 @@ Classes to handle Carla vehicles
 """
 import math
 import os
+import numpy as np
 
 import numpy
 from carla import VehicleControl
@@ -19,12 +20,17 @@ from ros_compatibility.qos import QoSProfile, DurabilityPolicy
 
 from carla_ros_bridge.vehicle import Vehicle
 
+from std_msgs.msg import Float32
+
 from carla_msgs.msg import (
     CarlaEgoVehicleInfo,
     CarlaEgoVehicleInfoWheel,
     CarlaEgoVehicleControl,
     CarlaEgoVehicleStatus
 )
+
+import speedometer_sensor
+
 from std_msgs.msg import Bool  # pylint: disable=import-error
 from std_msgs.msg import ColorRGBA  # pylint: disable=import-error
 
@@ -55,15 +61,23 @@ class EgoVehicle(Vehicle):
                                          parent=parent,
                                          node=node,
                                          carla_actor=carla_actor)
+        
+        print("Ego its me")
 
         self.vehicle_info_published = False
         self.vehicle_control_override = False
         self._vehicle_control_applied_callback = vehicle_control_applied_callback
 
+        self.speedometer_publisher = node.new_publisher(
+            Float32,
+            self.get_topic_prefix() + "/speedometer",
+            qos_profile=10)
+
         self.vehicle_status_publisher = node.new_publisher(
             CarlaEgoVehicleStatus,
             self.get_topic_prefix() + "/vehicle_status",
             qos_profile=10)
+
         self.vehicle_info_publisher = node.new_publisher(
             CarlaEgoVehicleInfo,
             self.get_topic_prefix() +
@@ -93,6 +107,9 @@ class EgoVehicle(Vehicle):
             self.get_topic_prefix() + "/enable_autopilot",
             self.enable_autopilot_updated,
             qos_profile=10)
+        
+
+
 
     def get_marker_color(self):
         """
@@ -115,6 +132,25 @@ class EgoVehicle(Vehicle):
 
         :return:
         """
+
+        speedometer = Float32()
+        try:
+            velocity = self.carla_actor.get_velocity()
+            transform = self.carla_actor.get_transform()
+        except AttributeError:
+            speedometer.data = 0.0
+
+        vel_np = np.array([velocity.x, velocity.y, velocity.z])
+        pitch = np.deg2rad(transform.rotation.pitch)
+        yaw = np.deg2rad(transform.rotation.yaw)
+        orientation = np.array([
+            np.cos(pitch) * np.cos(yaw),
+            np.cos(pitch) * np.sin(yaw),
+            np.sin(pitch)
+        ])
+        speedometer.data = np.dot(vel_np, orientation) * 3.6
+        self.speedometer_publisher.publish(speedometer)
+
         vehicle_status = CarlaEgoVehicleStatus(
             header=self.get_msg_header("map", timestamp=timestamp))
         vehicle_status.velocity = self.get_vehicle_speed_abs(self.carla_actor)
@@ -204,6 +240,7 @@ class EgoVehicle(Vehicle):
         self.node.destroy_subscription(self.manual_control_subscriber)
         self.node.destroy_publisher(self.vehicle_status_publisher)
         self.node.destroy_publisher(self.vehicle_info_publisher)
+        self.node.destroy_publisher(self.speedometer_pubisher)
         Vehicle.destroy(self)
 
     def control_command_override(self, enable):

@@ -417,7 +417,7 @@ def main(args=None):
     parameters['register_all_sensors'] = carla_bridge.get_param('register_all_sensors', True)
     parameters['town'] = carla_bridge.get_param('town', 'Town01')
     role_name = carla_bridge.get_param('ego_vehicle_role_name',
-                                       ["hero", "ego_vehicle", "hero1", "hero2", "hero3"])
+                                       ["hero", "ego_vehicle", "hero1", "hero2", "hero3", "ego"])
     parameters["ego_vehicle"] = {"role_name": role_name}
 
     carla_bridge.loginfo("Trying to connect to {host}:{port}".format(
