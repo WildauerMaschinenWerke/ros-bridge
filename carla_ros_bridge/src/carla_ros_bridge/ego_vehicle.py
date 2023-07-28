@@ -29,8 +29,6 @@ from carla_msgs.msg import (
     CarlaEgoVehicleStatus
 )
 
-import speedometer_sensor
-
 from std_msgs.msg import Bool  # pylint: disable=import-error
 from std_msgs.msg import ColorRGBA  # pylint: disable=import-error
 
