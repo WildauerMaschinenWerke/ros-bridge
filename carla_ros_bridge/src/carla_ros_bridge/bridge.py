@@ -445,16 +445,14 @@ def main(args=None):
 
         carla_world = carla_client.get_world()
        
-        
-        if "town" in parameters and not parameters['passive']:
+
+        if "town" in parameters and not parameters['passive'] and  parameters['town'] != 'None':
             if parameters["town"].endswith(".xodr"):
                 carla_bridge.loginfo(
                     "Loading opendrive world from file '{}'".format(parameters["town"]))
                 with open(parameters["town"]) as od_file:
                     data = od_file.read()
                 carla_world = carla_client.generate_opendrive_world(str(data))
-            elif parameters["town"] is "None":
-                pass
             else:
                 if carla_world.get_map().name != parameters["town"]:
                     carla_bridge.loginfo("Loading town '{}' (previous: '{}').".format(
