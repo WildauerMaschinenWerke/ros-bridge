@@ -365,7 +365,7 @@ class ActorFactory(object):
                 actor = Vehicle(uid, name, parent, self.node, carla_actor)
         elif carla_actor.type_id.startswith("sensor"):
             if carla_actor.type_id.startswith("sensor.camera"):
-                if carla_actor.type_id.startswith("sensor.camera.rgb"):
+                if carla_actor.type_id.startswith("sensor.camera.rgb") and not "websocket_camera" in carla_actor.attributes.get('role_name'):
                     actor = RgbCamera(uid, name, parent, spawn_pose, self.node,
                                       carla_actor, self.sync_mode)
                 elif carla_actor.type_id.startswith("sensor.camera.depth"):

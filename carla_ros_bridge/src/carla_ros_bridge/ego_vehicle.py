@@ -60,8 +60,6 @@ class EgoVehicle(Vehicle):
                                          node=node,
                                          carla_actor=carla_actor)
         
-        print("Ego its me")
-
         self.vehicle_info_published = False
         self.vehicle_control_override = False
         self._vehicle_control_applied_callback = vehicle_control_applied_callback
@@ -238,7 +236,7 @@ class EgoVehicle(Vehicle):
         self.node.destroy_subscription(self.manual_control_subscriber)
         self.node.destroy_publisher(self.vehicle_status_publisher)
         self.node.destroy_publisher(self.vehicle_info_publisher)
-        self.node.destroy_publisher(self.speedometer_pubisher)
+        self.node.destroy_publisher(self.speedometer_publisher)
         Vehicle.destroy(self)
 
     def control_command_override(self, enable):

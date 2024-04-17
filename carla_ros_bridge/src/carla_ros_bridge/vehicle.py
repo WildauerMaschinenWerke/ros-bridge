@@ -58,8 +58,6 @@ class Vehicle(TrafficParticipant):
                                       node=node,
                                       carla_actor=carla_actor)
         
-        print("im a vhivles")
-
     def get_marker_color(self):  # pylint: disable=no-self-use
         """
         Function (override) to return the color for marker messages.
