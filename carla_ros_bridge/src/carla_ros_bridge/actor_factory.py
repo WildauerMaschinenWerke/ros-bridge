@@ -281,7 +281,7 @@ class ActorFactory(object):
         # check that the actor is not already created.
         if carla_actor is not None and carla_actor.id in self.actors:
             return None
-
+            
         if attach_to != 0:
             if attach_to not in self.actors:
                 raise IndexError("Parent object {} not found".format(attach_to))
@@ -289,6 +289,10 @@ class ActorFactory(object):
             parent = self.actors[attach_to]
         else:
             parent = None
+
+        if carla_actor.attributes.get('role_name'):
+            if "websocket_camera" in carla_actor.attributes.get('role_name'):
+                return None
 
         if type_id == TFSensor.get_blueprint_name():
             actor = TFSensor(uid=uid, name=name, parent=parent, node=self.node)
@@ -365,7 +369,7 @@ class ActorFactory(object):
                 actor = Vehicle(uid, name, parent, self.node, carla_actor)
         elif carla_actor.type_id.startswith("sensor"):
             if carla_actor.type_id.startswith("sensor.camera"):
-                if carla_actor.type_id.startswith("sensor.camera.rgb") and not "websocket_camera" in carla_actor.attributes.get('role_name'):
+                if carla_actor.type_id.startswith("sensor.camera.rgb"):
                     actor = RgbCamera(uid, name, parent, spawn_pose, self.node,
                                       carla_actor, self.sync_mode)
                 elif carla_actor.type_id.startswith("sensor.camera.depth"):
