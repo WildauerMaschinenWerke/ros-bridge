@@ -86,6 +86,7 @@ class Camera(Sensor):
         super(Camera, self).destroy()
         self.node.destroy_publisher(self.camera_info_publisher)
         self.node.destroy_publisher(self.camera_image_publisher)
+        self.node.destroy_publisher(self.camera_transform_publisher)
 
     def _build_camera_info(self):
         """
